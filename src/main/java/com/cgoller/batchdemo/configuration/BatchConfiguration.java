@@ -1,8 +1,9 @@
 package com.cgoller.batchdemo.configuration;
 
+import java.util.Arrays;
+import java.util.List;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
@@ -19,9 +20,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 public class BatchConfiguration {
@@ -55,8 +53,6 @@ public class BatchConfiguration {
                 .partitioner("workerStep", vinPartitioner)
                 .step(workerStep)
                 .taskExecutor(taskExecutor)
-                // If you wish, set a throttle limit
-                .gridSize(10)
                 .build();
     }
 
@@ -166,6 +162,7 @@ public class BatchConfiguration {
         executor.setMaxPoolSize(poolSize);
         executor.setThreadNamePrefix("Partition-");
         executor.afterPropertiesSet();
+        executor.setAllowCoreThreadTimeOut(true);
         return executor;
     }
 

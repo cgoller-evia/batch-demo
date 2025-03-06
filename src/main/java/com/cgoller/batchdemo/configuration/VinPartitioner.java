@@ -51,11 +51,11 @@ public class VinPartitioner implements Partitioner {
     }
 
     private int parseQueryIdComplexity(String queryIdParam) {
+        // we would calculate query complexity here
         int qId = Integer.parseInt(queryIdParam);
         switch (qId) {
-            case 1: return 1;
+            case 1: return 3;
             case 2: return 2;
-            case 3: return 3;
             default: return 1;
         }
     }
