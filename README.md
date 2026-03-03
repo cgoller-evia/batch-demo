@@ -93,73 +93,58 @@ The application implements a partitioned batch job architecture:
 
 ### Class Diagram
 
-```plantuml
-@startuml
-skinparam classAttributeIconSize 0
+```mermaid
+classDiagram
+    class BatchdemoApplication {
+        +main(String[] args)
+    }
 
-class BatchdemoApplication {
-  +main(String[] args)
-}
+    class JobController {
+        -JobLauncher jobLauncher
+        -Job demoJob
+        +launchJob(JobRequest) ResponseEntity~String~
+    }
 
-package boundary {
-  class JobController {
-    -jobLauncher: JobLauncher
-    -demoJob: Job
-    +launchJob(JobRequest): ResponseEntity<String>
-  }
-}
+    class JobRequest {
+        -List~String~ vins
+        -int queryId
+        +getVins() List~String~
+        +setVins(List~String~)
+        +getQueryId() int
+        +setQueryId(int)
+    }
 
-package dto {
-  class JobRequest {
-    -vins: List<String>
-    -queryId: int
-    +getVins(): List<String>
-    +setVins(List<String>)
-    +getQueryId(): int
-    +setQueryId(int)
-  }
-}
+    class BatchConfiguration {
+        +demoJob(JobRepository, Step) Job
+        +partitionStep(...) Step
+        +workerStep(...) Step
+        +vinPartitioner(String, String) Partitioner
+        +partitionedVinReader(String) ListItemReader~String~
+        +processor(String) ItemProcessor~String,String~
+        +writer() ItemWriter~String~
+        +taskExecutor(String) TaskExecutor
+        -getComplexity(int) int
+    }
 
-package configuration {
-  class BatchConfiguration {
-    +demoJob(JobRepository, Step): Job
-    +partitionStep(JobRepository, PlatformTransactionManager, Partitioner, Step, TaskExecutor): Step
-    +workerStep(JobRepository, PlatformTransactionManager, ItemProcessor, ItemWriter, ListItemReader): Step
-    +vinPartitioner(String, String): Partitioner
-    +partitionedVinReader(String): ListItemReader<String>
-    +processor(String): ItemProcessor<String, String>
-    +writer(): ItemWriter<String>
-    +taskExecutor(String): TaskExecutor
-    -getComplexity(int): int
-  }
+    class VinPartitioner {
+        -String vinsParam
+        -String queryIdParam
+        +partition(int) Map~String,ExecutionContext~
+        -parseQueryIdComplexity(String) int
+    }
 
-  class VinPartitioner implements Partitioner {
-    -vinsParam: String
-    -queryIdParam: String
-    +partition(int): Map<String, ExecutionContext>
-    -parseQueryIdComplexity(String): int
-  }
-}
+    class Partitioner {
+        <<interface>>
+        +partition(int) Map~String,ExecutionContext~
+    }
 
-' Spring Framework classes (external)
-interface Partitioner <<Spring Batch>> {
-  +partition(int): Map<String, ExecutionContext>
-}
-
-' Relationships
-JobController --> JobRequest : uses
-JobController ..> Job : launches
-JobController ..> JobLauncher : uses
-BatchConfiguration ..> VinPartitioner : creates
-BatchConfiguration ..> Job : configures
-BatchConfiguration ..> Step : configures
-BatchConfiguration ..> ItemProcessor : configures
-BatchConfiguration ..> ItemWriter : configures
-BatchConfiguration ..> ListItemReader : configures
-BatchConfiguration ..> TaskExecutor : configures
-VinPartitioner ..> ExecutionContext : creates
-
-@enduml
+    JobController --> JobRequest : uses
+    JobController ..> Job : launches
+    JobController ..> JobLauncher : uses
+    BatchConfiguration ..> VinPartitioner : creates
+    BatchConfiguration ..> Job : configures
+    BatchConfiguration ..> Step : configures
+    VinPartitioner ..|> Partitioner : implements
 ```
 
 ### Partition Strategy
