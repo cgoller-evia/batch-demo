@@ -57,28 +57,28 @@ The application will start on `http://localhost:8080`
 **Request Body**:
 ```json
 {
-  "amount": 10,
-  "complexity": 2
+  "vins": ["VIN001", "VIN002", "VIN003"],
+  "queryId": 2
 }
 ```
 
 **Parameters**:
-- `amount`: Number of VINs to process (determines data volume)
-- `complexity`: Query complexity level (1-3, affects partition size and thread pool)
+- `vins`: List of Vehicle Identification Numbers to process
+- `queryId`: Query complexity identifier (1-3)
+  - `1`: Creates 3 partitions with 1 thread (high parallelism, low concurrency per partition)
+  - `2`: Creates 2 partitions with 2 threads (balanced)
+  - `3`: Creates 1 partition with 3 threads (low parallelism, high concurrency per partition)
 
 **Example with curl**:
 ```bash
 curl -X POST http://localhost:8080/jobs/launch \
   -H "Content-Type: application/json" \
-  -d '{"amount": 10, "complexity": 2}'
+  -d '{"vins":["VIN001","VIN002","VIN003"],"queryId":2}'
 ```
 
 **Response**:
-```json
-{
-  "jobExecutionId": 1,
-  "status": "STARTED"
-}
+```text
+Job submitted asynchronously
 ```
 
 ## Architecture
@@ -149,9 +149,12 @@ classDiagram
 
 ### Partition Strategy
 
-- Complexity 1: Larger partitions, fewer threads
-- Complexity 2: Medium partitions, moderate threading
-- Complexity 3: Smaller partitions, maximum parallelism
+The `queryId` parameter controls both partition count and thread pool size:
+
+- **queryId = 1**: 3 partitions, 1 thread → High parallelism with minimal concurrency per partition
+- **queryId = 2**: 2 partitions, 2 threads → Balanced approach
+- **queryId = 3**: 1 partition, 3 threads → Single partition with maximum thread concurrency
+- **Default**: 1 partition, 1 thread → Sequential processing
 
 ## Project Structure
 
